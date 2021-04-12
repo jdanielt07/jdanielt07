@@ -1,0 +1,35 @@
+---
+- name: evidencia
+  hosts: linux
+
+  tasks:
+    - name: nombre servidor
+      shell: hostname
+      register: out
+    - debug: var=out.stdout_lines
+
+    - name: version y hostname
+      shell: uname -a
+      register: out
+    - debug: var=out.stdout_lines
+
+    - name: discos
+      shell: df -h
+      register: out
+    - debug: var=out.stdout_lines
+
+    - name: memory
+      shell: free -m |grep Swap
+      register: out
+    - debug: var=out.stdout_lines
+
+    - name: date
+      shell: timedatectl
+      register: out
+    - debug: var=out.stdout_lines
+
+    - name: Messages  
+      shell: tail --lines=20 /var/log/messages 
+      register: out
+    - debug: var=out.stdout_lines
+...

@@ -1,0 +1,15 @@
+- hosts: Esxi
+#  remote_user:root
+  
+  tasks:
+  - name: Crear vSwitch05
+    command: esxcli network vswitch standard add -v vSwitch5
+
+  - name: Añadir interfaz vmnic1 al vSwitch05
+    command: esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch5
+
+#  - name: Añadir interfaz vmnic3 al vSwitch05
+#    command: esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch5
+
+  - name: Crear portgroup Production  en vSwitch05
+    command: esxcli network vswitch standard portgroup add -p "production" -v vSwitch5
