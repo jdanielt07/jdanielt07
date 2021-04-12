@@ -1,0 +1,64 @@
+---
+- name: Nueva VM, instala Apache y envia notificacion a Slack
+  hosts: localhost
+  user: root
+  sudo: true
+
+## Prompt que nos pregunta como queremos llamar a la nueva maquina virtual
+  vars_prompt:
+    - name: "guest"
+      prompt: "Nombre VM?"
+      private: no
+
+## Variables para conectar a vCenter, Template y ubicacion de la nueva VM
+  vars:
+    vcenter: IP_o_FQDN_de_vCenter
+    user: usuario_de_vCenter
+    passwd: password_del_usuario_de_vCenter
+    template: nombre_del_template
+    rpool: "/Resources" ## <- Default cuando no se especifica Resource Pool
+    cluster: "mi_cluster" ## En el Playbook no especifico ESXi porque el Cluster tiene DRS
+
+## Task que crea la máquina virtual a partir del Template. Go!
+  tasks:
+    - vsphere_guest:
+        vcenter_hostname: "{{ vcenter }}"
+        username: "{{ user }}"
+        password: "{{ passwd }}"
+        guest: "{{ guest }}"
+        from_template: "yes"
+        template_src: "{{ template }}"
+        resource_pool: "{{ rpool }}"
+        cluster: "{{ cluster }}"
+    - pause: seconds=60 ## Hace una pausa para esperar que encienda la VM y vCenter capture la IP
+
+## Las siguiente lineas recolectan "facts" de la VM y permite tomar la IP que tomó por DHCP
+    - vsphere_guest:
+        vcenter_hostname: "{{ vcenter }}"
+        username: "{{ user }}"
+        password: "{{ passwd }}"
+        guest: "{{ guest }}"
+        vmware_guest_facts: yes
+
+## Debug para validar que el Playbook tiene la IP de la VM
+    - debug: msg="la IP es {{ hw_eth0.ipaddresses[0] }}"
+
+## Agrega la IP al inventario de hosts para customizarlo
+    - add_host: name={{ hw_eth0.ipaddresses[0] }} groups=virtual
+
+-
+  hosts: virtual
+
+## Debug para validar que tenemos el nombre de la VM para cambiar el hostname (Revisar Fact Caching)
+  tasks:
+    - debug: msg="{{ hostvars['localhost']['hw_name'] }}"
+
+## Tareas. Instala Apache, lo inicia y le cambia el hostname a la máquina virtual.
+  tasks:
+    - name: instalar apache2
+      apt: name=apache2 update_cache=yes state=latest
+    - name: iniciar apache  
+      service: name=apache2 state=started
+    - name: renombrar host
+      hostname: name="{{ hostvars['localhost']['hw_name'] }}"
+

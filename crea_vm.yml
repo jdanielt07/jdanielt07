@@ -1,0 +1,41 @@
+---
+
+- hosts: Esxi
+
+# connection: local
+#  user: root
+#  password:Pa$$tuso1973
+  sudo: false
+  gather_facts: false
+  serial: 1
+
+#  vars_prompt: 
+#   - name: "some_password"      
+#     prompt: "MOAR Password"
+#     private: yes 
+  task: 
+  - vsphere_guest: 
+#     vcenter_hostname: vcenter.vsphere.local 
+#     username: admin@vsphere.local
+#     password: "{{some_password}}" 
+      guest: testansible1 
+      state: power_on 
+      vm_disk: 
+        disk1:
+        size_gb: 1 
+        type: thin 
+        datastore: Vm_Storage 
+      vm_nic: 
+        nic1: 
+        type: vmxnet3   
+        network: vm  
+        network_type: standard   
+      vm_hardware: 
+        memory: 1024 
+        num_cpus: 1 
+        osid: centos64Guest 
+        scsi: paravirtual 
+      esxi: 
+        datacenter: Vm_Storage 
+        hostsname: esxi  
+...
